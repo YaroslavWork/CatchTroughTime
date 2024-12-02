@@ -1,10 +1,13 @@
 import pygame
+import pymunk.pygame_util
+import pymunk
+import random
 
+from scripts.player import Player, PlayerRole
 import scripts.settings as s
 from scripts.camera import Camera
 from scripts.field import Field
 from scripts.UI.text import Text
-
 
 class App:
 
@@ -30,9 +33,18 @@ class App:
         self.keys = []
 
         # Set model variables
-        self.camera = Camera(x=0, y=0, distance=10, resolution=self.size)
+        self.camera = Camera(x=0, y=0, distance=1000, resolution=self.size)
         # This line takes data from save file
         self.field = Field()
+
+        # Pymunk configuration
+        self.space = pymunk.Space()
+        self.space.gravity = (0, 0)
+        
+        self.player = Player(uuid="1", name="Player", role=PlayerRole.RUNNER, pos=(100, 10))
+        self.player.add_to_space(self.space)
+
+        self.print_options = pymunk.pygame_util.DrawOptions(self.screen)
 
     def update(self) -> None:
         """
@@ -50,9 +62,13 @@ class App:
 
             if event.type == pygame.MOUSEBUTTONDOWN:  # If mouse button down...
                 if event.button == 1:
-                    pass
+                    self.player.start_move()
                 elif event.button == 3:
                     pass
+
+            if event.type == pygame.MOUSEBUTTONUP:  # If mouse button up...
+                if event.button == 1:
+                    self.player.stop_move()
 
             if event.type == pygame.KEYDOWN:  # If key button down...
                 if event.key == pygame.K_SPACE:
@@ -74,13 +90,16 @@ class App:
         # -*-*-             -*-*-
 
         # -*-*- Physics Block -*-*-
+        self.space.step(self.dt / 1000)
         self.field.update(self.dt)
+        self.player.update(self.camera.get_global_point(*self.mouse_pos))
         # -*-*-               -*-*-
 
         # -*-*- Rendering Block -*-*-
         self.screen.fill(self.colors['background'])  # Fill background
 
         self.field.draw(self.screen, self.camera)
+        self.player.draw(self.screen, self.camera)
 
         self.camera.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
         Text("FPS: " + str(int(self.clock.get_fps())), [0, 0, 0], 20).print(self.screen,
