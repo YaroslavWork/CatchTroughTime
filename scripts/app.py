@@ -9,6 +9,14 @@ from scripts.camera import Camera
 from scripts.field import Field
 from scripts.UI.text import Text
 
+def add_wall(space, pos):
+    body = pymunk.Body(body_type=pymunk.Body.STATIC)
+    body.position = pos
+    shape = pymunk.Poly.create_box(body, (50, 50))
+    shape.elasticity = 0.5
+    shape.friction = 0.5
+    space.add(body, shape)
+
 class App:
 
     def __init__(self) -> None:
@@ -32,11 +40,6 @@ class App:
         self.mouse_pos = (0, 0)
         self.keys = []
 
-        # Set model variables
-        self.camera = Camera(x=0, y=0, distance=1000, resolution=self.size)
-        # This line takes data from save file
-        self.field = Field()
-
         # Pymunk configuration
         self.space = pymunk.Space()
         self.space.gravity = (0, 0)
@@ -45,6 +48,11 @@ class App:
         self.player.add_to_space(self.space)
 
         self.print_options = pymunk.pygame_util.DrawOptions(self.screen)
+
+        # Set model variables
+        self.camera = Camera(x=0, y=0, distance=1000, resolution=self.size)
+        # This line takes data from save file
+        self.field = Field(self.space)
 
     def update(self) -> None:
         """

@@ -53,6 +53,7 @@ class Player:
             
 
     def draw(self, screen, camera) -> None:
+        self.body.angular_velocity = 0
         x, y = camera.get_local_point(self.body.position.x, self.body.position.y)
         r = camera.get_local_radius(PLAYER_RADIUS)
         pygame.draw.circle(screen, (0, 128, 255), (x, y), r)
