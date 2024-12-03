@@ -1,0 +1,43 @@
+{
+    "name": "First map",
+    "rounds": 5,
+    "time": 10,
+    "map_size": {
+      "width": 1000,
+      "height": 1000
+    },
+    "catcher_start_pos": [
+      {
+        "x": 50,
+        "y": 50
+      }  
+    ],
+    "runner_start_pos": [
+      {
+        "x":950,
+        "y":950
+      }  
+    ],
+    "walls": [
+      {
+        "pos": {
+          "x": 350,
+          "y": 480
+        },
+        "size": {
+          "width": 300,
+          "height": 40
+        }
+      },
+      {
+        "pos": {
+          "x": 480,
+          "y": 350
+        },
+        "size": {
+          "width": 40,
+          "height": 300
+        }
+      }
+    ]
+  }

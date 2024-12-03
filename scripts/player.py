@@ -2,7 +2,8 @@ from enum import Enum
 import pymunk, pygame
 from math import cos, sin, atan2
 
-from scripts.settings import PLAYER_MASS, PLAYER_RADIUS, PLAYER_ELASTICITY, PLAYER_FRICTION, PLAYER_SPEED, DUMPING
+from scripts.UI.text import Text
+from scripts.settings import DEBUG, COLORS, PLAYER_MASS, PLAYER_RADIUS, PLAYER_ELASTICITY, PLAYER_FRICTION, PLAYER_SPEED, DUMPING
 
 
 class PlayerRole(Enum):
@@ -22,11 +23,13 @@ class Player:
         self.body.position = pos
         self.shape = pymunk.Circle(self.body, PLAYER_RADIUS)
         self.shape.elasticity = PLAYER_ELASTICITY
-        self.shape.friction = PLAYER_FRICTION
 
         self.is_moving = False
 
         self.force = [0, 0]
+    
+    def set_pos(self, x, y):
+        self.body.position = (x, y)
     
     def add_to_space(self, space: pymunk.Space) -> None:
         space.add(self.body, self.shape)
@@ -56,4 +59,13 @@ class Player:
         self.body.angular_velocity = 0
         x, y = camera.get_local_point(self.body.position.x, self.body.position.y)
         r = camera.get_local_radius(PLAYER_RADIUS)
-        pygame.draw.circle(screen, (0, 128, 255), (x, y), r)
+        if self.role == PlayerRole.CATCHER:
+            pygame.draw.circle(screen, COLORS['catcher'], (x, y), r)
+        else:
+            pygame.draw.circle(screen, COLORS['runner'], (x, y), r)
+
+        if DEBUG:
+            Text(f"Pos: {int(self.body.position.x)}, {int(self.body.position.y)}", (0, 0, 0), 14).print(screen, (x+20, y-40))
+            Text(f"Velocity: {int(self.body.velocity.x)}, {int(self.body.velocity.y)} ({int(abs(self.body.velocity.x+self.body.velocity.y))})", (0, 0, 0), 14).print(screen, (x+20, y-30))
+
+            Text(f"Radius: {PLAYER_RADIUS}", (0, 0, 0), 14).print(screen, (x+20, y-20))

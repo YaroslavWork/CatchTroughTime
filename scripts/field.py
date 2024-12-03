@@ -1,24 +1,23 @@
 import pygame.draw
 import random
+from scripts.UI.text import Text
+from scripts.map import Map
 from scripts.wall import Wall
 
 
 class Field:
 
-    def __init__(self, space) -> None:
+    def __init__(self, space, player) -> None:
         self.space = space
-        self.walls = []
-        for _ in range(10):
-            x = random.randint(0, 1800)
-            y = random.randint(0, 1600)
-            w = random.randint(50, 100)
-            h = random.randint(50, 100)
-            self.walls.append(Wall(pygame.Rect(x, y, w, h)))
-            self.walls[-1].create_rectangle(self.space)
+        self.player = player
+        self.map = Map(self.space)
+        self.map.load("maps_conf/first_map.json")
+        self.map.set_players(1, self.player, change_role=True)
 
     def update(self, dt: float) -> None:
         NotImplementedError("Start coding here!")
 
     def draw(self, screen, camera) -> None:
-        for wall in self.walls:
-            wall.draw(screen, camera)
+        self.map.draw(screen, camera)
+
+        

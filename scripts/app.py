@@ -52,7 +52,7 @@ class App:
         # Set model variables
         self.camera = Camera(x=0, y=0, distance=1000, resolution=self.size)
         # This line takes data from save file
-        self.field = Field(self.space)
+        self.field = Field(self.space, self.player)
 
     def update(self) -> None:
         """
@@ -108,6 +108,12 @@ class App:
 
         self.field.draw(self.screen, self.camera)
         self.player.draw(self.screen, self.camera)
+
+        if s.DEBUG: 
+            screen_pos = self.mouse_pos
+            global_pos = self.camera.get_global_point(*screen_pos)
+            Text(f"Screen pos: {screen_pos[0]}, {screen_pos[1]}", (0, 0, 0), 14).print(self.screen, (self.mouse_pos[0]+20, self.mouse_pos[1]-20))
+            Text(f"Global pos: {int(global_pos[0])}, {int(global_pos[1])}", (0, 0, 0), 14).print(self.screen, (self.mouse_pos[0]+20, self.mouse_pos[1]-10))
 
         self.camera.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
         Text("FPS: " + str(int(self.clock.get_fps())), [0, 0, 0], 20).print(self.screen,
