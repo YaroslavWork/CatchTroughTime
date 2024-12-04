@@ -3,7 +3,8 @@ import pymunk, pygame
 from math import cos, sin, atan2
 
 from scripts.UI.text import Text
-from scripts.settings import DEBUG, COLORS, PLAYER_MASS, PLAYER_RADIUS, PLAYER_ELASTICITY, PLAYER_FRICTION, PLAYER_SPEED, DUMPING
+import scripts.settings as s
+from scripts.settings import COLORS, PLAYER_MASS, PLAYER_RADIUS, PLAYER_ELASTICITY, PLAYER_FRICTION, PLAYER_SPEED, DUMPING
 
 
 class PlayerRole(Enum):
@@ -64,7 +65,7 @@ class Player:
         else:
             pygame.draw.circle(screen, COLORS['runner'], (x, y), r)
 
-        if DEBUG:
+        if s.DEBUG:
             Text(f"Pos: {int(self.body.position.x)}, {int(self.body.position.y)}", (0, 0, 0), 14).print(screen, (x+20, y-40))
             Text(f"Velocity: {int(self.body.velocity.x)}, {int(self.body.velocity.y)} ({int(abs(self.body.velocity.x+self.body.velocity.y))})", (0, 0, 0), 14).print(screen, (x+20, y-30))
 

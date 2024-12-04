@@ -29,6 +29,16 @@ class Map:
 
             walls_pos = data["walls"]
             self.walls = []
+            # Generate walls for map borders
+            self.walls.append(Wall(pygame.Rect(0, -10, self.size[0], 10)))
+            self.walls[-1].create_rectangle(self.space)
+            self.walls.append(Wall(pygame.Rect(-10, 0, 10, self.size[1])))
+            self.walls[-1].create_rectangle(self.space)
+            self.walls.append(Wall(pygame.Rect(0, self.size[1], self.size[0], 10)))
+            self.walls[-1].create_rectangle(self.space)
+            self.walls.append(Wall(pygame.Rect(self.size[0], 0, 10, self.size[1])))
+            self.walls[-1].create_rectangle(self.space)
+
             for wall_pos in walls_pos:
                 x = wall_pos["pos"]["x"]
                 y = wall_pos["pos"]["y"]

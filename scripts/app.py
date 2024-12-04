@@ -81,6 +81,8 @@ class App:
             if event.type == pygame.KEYDOWN:  # If key button down...
                 if event.key == pygame.K_SPACE:
                     pass
+                if event.key == pygame.K_BACKSPACE:
+                    s.DEBUG = not s.DEBUG
 
         self.keys = pygame.key.get_pressed()  # Get all keys (pressed or not)
         if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
@@ -115,10 +117,10 @@ class App:
             Text(f"Screen pos: {screen_pos[0]}, {screen_pos[1]}", (0, 0, 0), 14).print(self.screen, (self.mouse_pos[0]+20, self.mouse_pos[1]-20))
             Text(f"Global pos: {int(global_pos[0])}, {int(global_pos[1])}", (0, 0, 0), 14).print(self.screen, (self.mouse_pos[0]+20, self.mouse_pos[1]-10))
 
-        self.camera.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
-        Text("FPS: " + str(int(self.clock.get_fps())), [0, 0, 0], 20).print(self.screen,
-                                                                            [self.width - 70, self.height - 21],
-                                                                            False)  # FPS counter
+            self.camera.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
+            Text("FPS: " + str(int(self.clock.get_fps())), [0, 0, 0], 20).print(self.screen,
+                                                                                [self.width - 70, self.height - 21],
+                                                                                False)  # FPS counter
         # -*-*-                 -*-*-
 
         # -*-*- Update Block -*-*-

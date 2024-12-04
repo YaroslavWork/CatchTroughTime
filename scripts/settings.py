@@ -1,7 +1,7 @@
 SIZE = [1080, 720]  # [width, height]
 NAME = "Empty Pygame Project"  # Name of the window
 FPS = 0  # 0 - unlimited
-DEBUG = True  # Debug mode
+DEBUG = False  # Debug mode
 COLORS = {
     "background": (255, 249, 193),  # Background color
     "wall": (154, 151, 116), # Wall color
@@ -9,8 +9,6 @@ COLORS = {
     "catcher": (255, 56, 54), # Catcher color
     "runner": (50, 113, 252) # Runner color
 }
-
-
 
 
 # Physics configuration
