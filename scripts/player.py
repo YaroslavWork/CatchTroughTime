@@ -26,6 +26,7 @@ class Player:
         self.shape.elasticity = PLAYER_ELASTICITY
 
         self.is_moving = False
+        self.movement_is_blocked = False
 
         self.force = [0, 0]
     
@@ -41,15 +42,20 @@ class Player:
     def stop_move(self) -> None:
         self.is_moving = False
 
-    def update(self, mouse_pos: float) -> None:
-        if self.is_moving:
-            # Convert body pos and target pos to angle
-            vector = (mouse_pos[0] - self.body.position.x, mouse_pos[1] - self.body.position.y)
-            angle = atan2(vector[1], vector[0])
-            # Calculate force
-            self.force = [cos(angle) * PLAYER_SPEED, sin(angle) * PLAYER_SPEED]
+    def block_movement(self) -> None:
+        self.movement_is_blocked = True
 
-            self.body.apply_force_at_local_point(self.force, (0, 0))
+    def unblock_movement(self) -> None:
+        self.movement_is_blocked = False
+
+    def update(self, mouse_pos: float) -> None:
+        if self.is_moving and not self.movement_is_blocked:
+                # Convert body pos and target pos to angle
+                vector = (mouse_pos[0] - self.body.position.x, mouse_pos[1] - self.body.position.y)
+                angle = atan2(vector[1], vector[0])
+                # Calculate force
+                self.force = [cos(angle) * PLAYER_SPEED, sin(angle) * PLAYER_SPEED]
+                self.body.apply_force_at_local_point(self.force, (0, 0))
         else:
             self.body.velocity = (self.body.velocity[0] * DUMPING, self.body.velocity[1] * DUMPING)
         
@@ -67,6 +73,6 @@ class Player:
 
         if s.DEBUG:
             Text(f"Pos: {int(self.body.position.x)}, {int(self.body.position.y)}", (0, 0, 0), 14).print(screen, (x+20, y-40))
-            Text(f"Velocity: {int(self.body.velocity.x)}, {int(self.body.velocity.y)} ({int(abs(self.body.velocity.x+self.body.velocity.y))})", (0, 0, 0), 14).print(screen, (x+20, y-30))
+            Text(f"Velocity: {int(self.body.velocity.x)}, {int(self.body.velocity.y)} ({int(abs(self.body.velocity.x)+abs(self.body.velocity.y))})", (0, 0, 0), 14).print(screen, (x+20, y-30))
 
             Text(f"Radius: {PLAYER_RADIUS}", (0, 0, 0), 14).print(screen, (x+20, y-20))

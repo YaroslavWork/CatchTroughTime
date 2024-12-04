@@ -1,5 +1,5 @@
 SIZE = [1080, 720]  # [width, height]
-NAME = "Empty Pygame Project"  # Name of the window
+NAME = "Catch Trought Time"  # Name of the window
 FPS = 0  # 0 - unlimited
 DEBUG = False  # Debug mode
 COLORS = {
@@ -21,3 +21,7 @@ PLAYER_SPEED = 2000  # Speed of the player
 WALL_ELASTICITY = 0.8  # Elasticity of the wall
 WALL_FRICTION = 0.5  # Friction of the wall
 DUMPING = 0.999  # Dumping of the player
+
+# Action configuration
+COUNTDOWN_TIME = 3000  # Countdown time in ms
+ACTION_TIME = 10000  # Action time in ms

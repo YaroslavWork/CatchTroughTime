@@ -83,6 +83,8 @@ class App:
                     pass
                 if event.key == pygame.K_BACKSPACE:
                     s.DEBUG = not s.DEBUG
+                if event.key == pygame.K_r:
+                    self.field.start_countdown()
 
         self.keys = pygame.key.get_pressed()  # Get all keys (pressed or not)
         if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
@@ -101,8 +103,8 @@ class App:
 
         # -*-*- Physics Block -*-*-
         self.space.step(self.dt / 1000)
-        self.field.update(self.dt)
-        self.player.update(self.camera.get_global_point(*self.mouse_pos))
+        self.field.update(self.dt, self.camera.get_global_point(*self.mouse_pos))
+        
         # -*-*-               -*-*-
 
         # -*-*- Rendering Block -*-*-
@@ -114,6 +116,8 @@ class App:
         if s.DEBUG: 
             screen_pos = self.mouse_pos
             global_pos = self.camera.get_global_point(*screen_pos)
+            if int(pygame.time.get_ticks() / 500) % 2 == 0:
+                Text("DEBUG MODE", (255, 0, 0), 20).print(self.screen, (10, 10))  # Debug mode
             Text(f"Screen pos: {screen_pos[0]}, {screen_pos[1]}", (0, 0, 0), 14).print(self.screen, (self.mouse_pos[0]+20, self.mouse_pos[1]-20))
             Text(f"Global pos: {int(global_pos[0])}, {int(global_pos[1])}", (0, 0, 0), 14).print(self.screen, (self.mouse_pos[0]+20, self.mouse_pos[1]-10))
 
