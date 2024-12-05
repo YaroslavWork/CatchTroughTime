@@ -32,6 +32,9 @@ class Player:
     
     def set_pos(self, x, y):
         self.body.position = (x, y)
+
+    def get_pos(self):
+        return self.body.position.x, self.body.position.y
     
     def add_to_space(self, space: pymunk.Space) -> None:
         space.add(self.body, self.shape)

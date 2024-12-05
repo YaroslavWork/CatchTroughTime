@@ -111,7 +111,6 @@ class App:
         self.screen.fill(self.colors['background'])  # Fill background
 
         self.field.draw(self.screen, self.camera)
-        self.player.draw(self.screen, self.camera)
 
         if s.DEBUG: 
             screen_pos = self.mouse_pos

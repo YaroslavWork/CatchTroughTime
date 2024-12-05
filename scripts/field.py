@@ -3,7 +3,7 @@ import random
 from scripts.UI.text import Text
 from scripts.map import Map
 from scripts.wall import Wall
-from scripts.settings import COUNTDOWN_TIME, ACTION_TIME, SIZE
+from scripts.settings import COUNTDOWN_TIME, ACTION_TIME, SIZE, SERVER_TICK
 from enum import Enum
 
 class GameStatus(Enum):
@@ -25,6 +25,10 @@ class Field:
     
         self.countdown_time_in_ms = COUNTDOWN_TIME
         self.action_time_in_ms = 0
+        self.server_tick_in_ms = 1000 / SERVER_TICK
+        self.count_recorded_ticks = 0
+
+        self.movement_records = []
 
         self.prepare_action()
        
@@ -37,6 +41,7 @@ class Field:
     def start_countdown(self) -> None:
         self.game_status = GameStatus.COUNTDOWN
         self.countdown = COUNTDOWN_TIME
+        
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:
         self.player.update(mouse_pos)
@@ -45,15 +50,24 @@ class Field:
             self.countdown_time_in_ms -= dt
             if self.countdown_time_in_ms <= 0:
                 self.game_status = GameStatus.ACTION
+                self.action_time_in_ms = 0
                 self.player.unblock_movement()
         elif self.game_status == GameStatus.ACTION:
             self.action_time_in_ms += dt
+
+            if self.action_time_in_ms // self.server_tick_in_ms > self.count_recorded_ticks:
+                self.count_recorded_ticks += 1
+                self.movement_records.append(self.player.get_pos())
+
             if self.action_time_in_ms >= ACTION_TIME:
                 self.game_status = GameStatus.AFTER_ACTION
                 self.player.block_movement()
 
     def draw(self, screen, camera) -> None:
         self.map.draw(screen, camera)
+        self.player.draw(screen, camera)
+
+
         status_game_text_pos = (SIZE[0] - 100, 20)
         color = (30, 128, 255)
         if self.game_status == GameStatus.PREPARING:

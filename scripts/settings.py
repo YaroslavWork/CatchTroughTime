@@ -25,3 +25,6 @@ DUMPING = 0.999  # Dumping of the player
 # Action configuration
 COUNTDOWN_TIME = 3000  # Countdown time in ms
 ACTION_TIME = 10000  # Action time in ms
+
+# Server configuration
+SERVER_TICK = 20
