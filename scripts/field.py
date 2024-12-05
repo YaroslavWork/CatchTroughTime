@@ -2,8 +2,10 @@ import pygame.draw
 import random
 from scripts.UI.text import Text
 from scripts.map import Map
+from scripts.player import PlayerRole
+from scripts.simulation import Simulation
 from scripts.wall import Wall
-from scripts.settings import COUNTDOWN_TIME, ACTION_TIME, SIZE, SERVER_TICK
+from scripts.settings import COUNTDOWN_TIME, ACTION_TIME, SIZE, SERVER_TICK, COLORS
 from enum import Enum
 
 class GameStatus(Enum):
@@ -29,6 +31,8 @@ class Field:
         self.count_recorded_ticks = 0
 
         self.movement_records = []
+        self.simulation = None
+        self.winner = None
 
         self.prepare_action()
        
@@ -41,6 +45,12 @@ class Field:
     def start_countdown(self) -> None:
         self.game_status = GameStatus.COUNTDOWN
         self.countdown = COUNTDOWN_TIME
+
+    def launch_simulation(self) -> None:
+        if self.game_status == GameStatus.AFTER_ACTION:
+            self.game_status = GameStatus.SIMULATION
+            self.simulation = Simulation(["Player"], [self.player.role], [self.movement_records], self.map, SERVER_TICK)
+            self.simulation.start()
         
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:
@@ -62,11 +72,21 @@ class Field:
             if self.action_time_in_ms >= ACTION_TIME:
                 self.game_status = GameStatus.AFTER_ACTION
                 self.player.block_movement()
+        elif self.game_status == GameStatus.SIMULATION:
+            self.simulation.update(dt)
+            if self.simulation.get_time() >= ACTION_TIME:
+                self.game_status = GameStatus.RESULTS
+                self.winner = PlayerRole.RUNNER
+            if self.simulation.collision_is_detected:
+                self.game_status = GameStatus.RESULTS
+                self.winner = PlayerRole.CATCHER
 
     def draw(self, screen, camera) -> None:
-        self.map.draw(screen, camera)
-        self.player.draw(screen, camera)
-
+        if self.game_status != GameStatus.SIMULATION and self.game_status != GameStatus.RESULTS:
+            self.map.draw(screen, camera)
+            self.player.draw(screen, camera)
+        else:
+            self.simulation.draw(screen, camera)
 
         status_game_text_pos = (SIZE[0] - 100, 20)
         color = (30, 128, 255)
@@ -84,5 +104,10 @@ class Field:
             Text("SIMULATION", color, 20).print(screen, status_game_text_pos)
         elif self.game_status == GameStatus.RESULTS:
             Text("RESULTS", color, 20).print(screen, status_game_text_pos)
+            if self.winner == PlayerRole.CATCHER:
+                Text("CATCHER WIN", COLORS['catcher'], 50).print(screen, (SIZE[0]//2, SIZE[1]//2), True)
+            else:
+                Text("RUNNER WIN", COLORS['runner'], 50).print(screen, (SIZE[0]//2, SIZE[1]//2), True)
+
 
         

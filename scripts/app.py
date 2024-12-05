@@ -9,13 +9,6 @@ from scripts.camera import Camera
 from scripts.field import Field
 from scripts.UI.text import Text
 
-def add_wall(space, pos):
-    body = pymunk.Body(body_type=pymunk.Body.STATIC)
-    body.position = pos
-    shape = pymunk.Poly.create_box(body, (50, 50))
-    shape.elasticity = 0.5
-    shape.friction = 0.5
-    space.add(body, shape)
 
 class App:
 
@@ -43,17 +36,17 @@ class App:
         # Pymunk configuration
         self.space = pymunk.Space()
         self.space.gravity = (0, 0)
-        
-        self.player = Player(uuid="1", name="Player", role=PlayerRole.RUNNER, pos=(100, 10))
-        self.player.add_to_space(self.space)
-
-        self.print_options = pymunk.pygame_util.DrawOptions(self.screen)
 
         # Set model variables
         self.camera = Camera(x=0, y=0, distance=1000, resolution=self.size)
-        # This line takes data from save file
+        self.player = Player(uuid="1", name="Player", role=PlayerRole.RUNNER, pos=(100, 10))
+        self.player.add_to_space(self.space)
         self.field = Field(self.space, self.player)
 
+        
+        
+
+        
     def update(self) -> None:
         """
         Main update function of the program.
@@ -69,13 +62,13 @@ class App:
                 Text.fonts = {}  # Clear fonts
 
             if event.type == pygame.MOUSEBUTTONDOWN:  # If mouse button down...
-                if event.button == 1:
+                if event.button == 1:  # Left mouse button
                     self.player.start_move()
-                elif event.button == 3:
+                elif event.button == 3:  # Right mouse button
                     pass
 
             if event.type == pygame.MOUSEBUTTONUP:  # If mouse button up...
-                if event.button == 1:
+                if event.button == 1:  # Left mouse button
                     self.player.stop_move()
 
             if event.type == pygame.KEYDOWN:  # If key button down...
@@ -85,6 +78,8 @@ class App:
                     s.DEBUG = not s.DEBUG
                 if event.key == pygame.K_r:
                     self.field.start_countdown()
+                if event.key == pygame.K_l:
+                    self.field.launch_simulation()
 
         self.keys = pygame.key.get_pressed()  # Get all keys (pressed or not)
         if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
@@ -115,15 +110,13 @@ class App:
         if s.DEBUG: 
             screen_pos = self.mouse_pos
             global_pos = self.camera.get_global_point(*screen_pos)
-            if int(pygame.time.get_ticks() / 500) % 2 == 0:
-                Text("DEBUG MODE", (255, 0, 0), 20).print(self.screen, (10, 10))  # Debug mode
+            if int(pygame.time.get_ticks() / 500) % 2 == 0:  # Blinking text
+                Text("DEBUG MODE", (255, 0, 0), 20).print(self.screen, (10, 10))
             Text(f"Screen pos: {screen_pos[0]}, {screen_pos[1]}", (0, 0, 0), 14).print(self.screen, (self.mouse_pos[0]+20, self.mouse_pos[1]-20))
             Text(f"Global pos: {int(global_pos[0])}, {int(global_pos[1])}", (0, 0, 0), 14).print(self.screen, (self.mouse_pos[0]+20, self.mouse_pos[1]-10))
 
             self.camera.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
-            Text("FPS: " + str(int(self.clock.get_fps())), [0, 0, 0], 20).print(self.screen,
-                                                                                [self.width - 70, self.height - 21],
-                                                                                False)  # FPS counter
+            Text("FPS: " + str(int(self.clock.get_fps())), [0, 0, 0], 20).print(self.screen, [self.width - 70, self.height - 21], False)  # FPS counter
         # -*-*-                 -*-*-
 
         # -*-*- Update Block -*-*-
