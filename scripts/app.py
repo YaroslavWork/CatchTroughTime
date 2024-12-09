@@ -39,7 +39,10 @@ class App:
 
         # Set model variables
         self.camera = Camera(x=0, y=0, distance=1000, resolution=self.size)
-        self.player = Player(uuid="1", name="Player", role=PlayerRole.RUNNER, pos=(100, 10))
+        self.player = Player(uuid="1", name="", role=PlayerRole.RUNNER, pos=(100, 10))
+        with open('conf/player_name.txt', 'r') as file:
+            self.player.name = file.read().strip() + str(random.randint(0, 10000))  # TESTS IN MY LOCAL MACHINE
+        # TODO: DELETE RANDOM PART LATER
         self.player.add_to_space(self.space)
         self.field = Field(self.space, self.player)
 
@@ -73,7 +76,7 @@ class App:
 
             if event.type == pygame.KEYDOWN:  # If key button down...
                 if event.key == pygame.K_SPACE:
-                    pass
+                    self.field.connect_to_server()
                 if event.key == pygame.K_BACKSPACE:
                     s.DEBUG = not s.DEBUG
                 if event.key == pygame.K_r:

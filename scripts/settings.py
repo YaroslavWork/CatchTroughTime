@@ -2,6 +2,7 @@ SIZE = [1080, 720]  # [width, height]
 NAME = "Catch Trought Time"  # Name of the window
 FPS = 0  # 0 - unlimited
 DEBUG = False  # Debug mode
+
 COLORS = {
     "background": (255, 249, 193),  # Background color
     "wall": (154, 151, 116), # Wall color
