@@ -61,8 +61,9 @@ class App:
 
         for event in pygame.event.get():  # Get all events
             if event.type == pygame.QUIT:  # If you want to close the program...
-                close()
                 Text.fonts = {}  # Clear fonts
+                self.field.sock.close()
+                close()
 
             if event.type == pygame.MOUSEBUTTONDOWN:  # If mouse button down...
                 if event.button == 1:  # Left mouse button

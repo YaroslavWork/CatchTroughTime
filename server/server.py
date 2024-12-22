@@ -17,8 +17,41 @@ DATA_SIZE = 1024
 PLAYERS = []
 
 
-def wait_very_small_time_between_requests():
-    sleep(0.005)
+def broadcast_to_all(type, action, parameters=None):
+    global PLAYERS
+    
+    for player in PLAYERS:
+        send_message(player.client, type, action, parameters)
+
+
+def broadcast_to_all_except_one(client: socket.socket, type, action, parameters=None):
+    global PLAYERS
+    
+    for p in PLAYERS:
+        if p.client != client:
+            send_message(p.client, type, action, parameters)
+
+
+def game(player: ServerPlayer) -> None:
+    for p in PLAYERS:
+        if p != player:
+            send_message(player.client, "game", "new_player", f"{p.uuid} {p.name}")
+    broadcast_to_all_except_one(player.client, "game", "new_player", f"{player.uuid} {player.name}")
+    while True:
+        try:
+            msgs: list[dict] = receive_message(player.client, DATA_SIZE)
+            for msg in msgs:
+                if msg['type'] == "game":
+                    pass
+        except DisconnectError as de:
+            print(f'Connection from {player.client.getpeername()} has been lost.')
+            # Delete player from PLAYERS
+            for i in range(0, len(PLAYERS)):
+                if PLAYERS[i].client == de.sock:
+                    del PLAYERS[i]
+                    break
+            player.client.close()
+            break
 
 
 def auth(client: socket.socket) -> None:
@@ -31,11 +64,11 @@ def auth(client: socket.socket) -> None:
                 if msg['type'] == "auth":
                     match msg['action']:
                         case "connect":
-                            # if len(PLAYERS) >= MAX_CONNECTIONS:
-                            #     send_message(client, "auth", "field_full")
-                            #     break
-                            # else:
-                            send_message(client, "auth", "request_password")
+                            if len(PLAYERS) >= MAX_CONNECTIONS:
+                                send_message(client, "auth", "field_full")
+                                break
+                            else:
+                                send_message(client, "auth", "request_password")
                         case "response_password":
                             if msg['parameters'] == SERVER_PASSWORD:
                                 send_message(client, "auth", "success_password")
@@ -55,7 +88,6 @@ def auth(client: socket.socket) -> None:
                                 break
                             
                             send_message(client, "auth", "success_name")
-                            wait_very_small_time_between_requests()
                             
                             current_player.name = msg['parameters']
                             current_player.uuid = str(uuid.uuid4())
@@ -63,12 +95,14 @@ def auth(client: socket.socket) -> None:
                             send_message(client, "auth", "uuid", current_player.uuid)
                             PLAYERS.append(current_player)
                             send_message(client, "auth", "success")
+                            game(current_player)
+                            break
     except DisconnectError:
         print(f'Connection from {client.getpeername()} has been lost.')
         client.close()
-
-            
-
+    except OSError:
+        print(f'Connection has been lost.')
+        client.close()
 
 
 def main():

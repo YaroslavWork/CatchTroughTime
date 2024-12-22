@@ -25,6 +25,7 @@ class Field:
     def __init__(self, space, player) -> None:
         self.space = space
         self.player = player
+        self.other_players = []
         self.map = Map(self.space)
         self.game_status = GameStatus.PREPARING
     
@@ -38,6 +39,7 @@ class Field:
         self.winner = None
 
         self.sock = None
+        self.server_auth_verified = False
         self.texts = ["...", "...", "...", "..."]
         self.points = [0, 0, 0, 0]
 
@@ -45,10 +47,13 @@ class Field:
         self.prepare_action()
     
     def connect_to_server(self) -> None:
-        self.sock = None
+        self.server_auth_verified = False
         self.texts = ["...", "...", "...", "..."]
         self.points = [0, 0, 0, 0]
-        self.connect_thread = None
+        self.other_players = []
+        if self.sock is not None:
+            self.sock.close()
+            self.sock = None
         self.connect_thread = threading.Thread(target=self.connect).start()
 
     def prepare_action(self) -> None:
@@ -140,7 +145,14 @@ class Field:
                             self.points[3] = 3
                         case "success":
                             print("Auth success")
-                            return
+                            self.server_auth_verified = True
+                elif msg["type"] == "game":
+                    match msg["action"]:
+                        case "new_player":
+                            data = msg["parameters"]
+                            uuid = data.split(" ")[0]
+                            name = "".join(data.split(" ")[1:])
+                            self.other_players.append({"uuid": uuid, "name": name})
         
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:
@@ -183,19 +195,25 @@ class Field:
         if self.game_status == GameStatus.PREPARING:
             Text("PREPARING", color, 20).print(screen, status_game_text_pos)
             pygame.draw.rect(screen, (255, 255, 255), (SIZE[0]//2-250, SIZE[1]//2-250, 500, 400))
-            Text(self.texts[0], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-200), False)
-            Text(self.texts[1], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-150), False)
-            Text(self.texts[2], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-100), False)
-            Text(self.texts[3], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-50), False)
-            for i in range(len(self.points)):
-                if self.points[i] == 0:
-                    pygame.draw.circle(screen, (128, 128, 128), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
-                elif self.points[i] == 1:
-                    pygame.draw.circle(screen, (0, 0, 255), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
-                elif self.points[i] == 2:
-                    pygame.draw.circle(screen, (255, 0, 0), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
-                elif self.points[i] == 3:
-                    pygame.draw.circle(screen, (0, 255, 0), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
+            if self.server_auth_verified is False:
+                Text(self.texts[0], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-200), False)
+                Text(self.texts[1], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-150), False)
+                Text(self.texts[2], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-100), False)
+                Text(self.texts[3], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-50), False)
+                for i in range(len(self.points)):
+                    if self.points[i] == 0:
+                        pygame.draw.circle(screen, (128, 128, 128), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
+                    elif self.points[i] == 1:
+                        pygame.draw.circle(screen, (0, 0, 255), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
+                    elif self.points[i] == 2:
+                        pygame.draw.circle(screen, (255, 0, 0), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
+                    elif self.points[i] == 3:
+                        pygame.draw.circle(screen, (0, 255, 0), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
+            else:
+                Text(self.player.name, (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-200), False)
+                print(self.other_players)
+                for i, player in enumerate(self.other_players):
+                    Text(player["name"], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-150+i*50), False)
         elif self.game_status == GameStatus.COUNTDOWN:
             Text("COUNTDOWN", color, 20).print(screen, status_game_text_pos)
             Text(str(int(self.countdown_time_in_ms / 1000)+1), (0, 0, 255), 400).print(screen, (SIZE[0]//2, SIZE[1]//2), True)
