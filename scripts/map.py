@@ -13,39 +13,51 @@ class Map:
         self.name = None
         self.rounds = None
         self.time = None
-        self.size = None
+        self.size = (0, 0)
         self.catcher_start_pos = None
-        self.walls = None
+        self.walls = []
+        self.catcher_start_pos = []
+        self.runner_start_pos = []
 
-    def load(self, path: str) -> None:
-        with open(path, "r") as file:
+    def get_player_amount(self) -> int:
+        return len(self.catcher_start_pos) + len(self.runner_start_pos)
+
+    def load(self, map_path: str) -> None:
+        with open(map_path, "r") as file:
             data = json.load(file)
-            self.name = data["name"]
-            self.rounds = data["rounds"]
-            self.time = data["time"]
-            self.size = data["map_size"]["width"], data["map_size"]["height"]
-            self.catcher_start_pos = data["catcher_start_pos"]
-            self.runner_start_pos = data["runner_start_pos"]
+            self.set_map(data)
 
-            walls_pos = data["walls"]
-            self.walls = []
-            # Generate walls for map borders
-            self.walls.append(Wall(pygame.Rect(0, -10, self.size[0], 10)))
-            self.walls[-1].create_rectangle(self.space)
-            self.walls.append(Wall(pygame.Rect(-10, 0, 10, self.size[1])))
-            self.walls[-1].create_rectangle(self.space)
-            self.walls.append(Wall(pygame.Rect(0, self.size[1], self.size[0], 10)))
-            self.walls[-1].create_rectangle(self.space)
-            self.walls.append(Wall(pygame.Rect(self.size[0], 0, 10, self.size[1])))
-            self.walls[-1].create_rectangle(self.space)
+    def load_raw_data(self, raw_data: str) -> None:
+        data = json.loads(raw_data)
+        self.set_map(data)
 
-            for wall_pos in walls_pos:
-                x = wall_pos["pos"]["x"]
-                y = wall_pos["pos"]["y"]
-                w = wall_pos["size"]["width"]
-                h = wall_pos["size"]["height"]
-                self.walls.append(Wall(pygame.Rect(x, y, w, h)))
-                self.walls[-1].create_rectangle(self.space)
+    def set_map(self, data: str) -> None:
+        self.name = data["name"]
+        self.rounds = data["rounds"]
+        self.time = data["time"]
+        self.size = data["map_size"]["width"], data["map_size"]["height"]
+        self.catcher_start_pos = data["catcher_start_pos"]
+        self.runner_start_pos = data["runner_start_pos"]
+
+        walls_pos = data["walls"]
+        self.walls = []
+        # Generate walls for map borders
+        self.walls.append(Wall(pygame.Rect(0, -10, self.size[0], 10)))
+        self.walls[-1].create_rectangle(self.space)
+        self.walls.append(Wall(pygame.Rect(-10, 0, 10, self.size[1])))
+        self.walls[-1].create_rectangle(self.space)
+        self.walls.append(Wall(pygame.Rect(0, self.size[1], self.size[0], 10)))
+        self.walls[-1].create_rectangle(self.space)
+        self.walls.append(Wall(pygame.Rect(self.size[0], 0, 10, self.size[1])))
+        self.walls[-1].create_rectangle(self.space)
+
+        for wall_pos in walls_pos:
+            x = wall_pos["pos"]["x"]
+            y = wall_pos["pos"]["y"]
+            w = wall_pos["size"]["width"]
+            h = wall_pos["size"]["height"]
+            self.walls.append(Wall(pygame.Rect(x, y, w, h)))
+            self.walls[-1].create_rectangle(self.space)
 
     def set_players(self, start_id: int, player, change_role=False) -> None:
         # STARTS FROM CATHERS

@@ -81,7 +81,7 @@ class App:
                 if event.key == pygame.K_BACKSPACE:
                     s.DEBUG = not s.DEBUG
                 if event.key == pygame.K_r:
-                    self.field.start_countdown()
+                    self.field.switch_ready_state()
                 if event.key == pygame.K_l:
                     self.field.launch_simulation()
 

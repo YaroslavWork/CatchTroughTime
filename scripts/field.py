@@ -56,10 +56,13 @@ class Field:
             self.sock = None
         self.connect_thread = threading.Thread(target=self.connect).start()
 
+    def switch_ready_state(self) -> None:
+        self.player.switch_ready_state()
+        if self.server_auth_verified:
+            send_message(self.sock, "game", "ready", f"{int(self.player.is_ready)}")
+
     def prepare_action(self) -> None:
         self.game_status = GameStatus.PREPARING
-        self.map.load("conf/first_map.json")
-        self.map.set_players(1, self.player, change_role=True)
         self.player.block_movement()
 
     def start_countdown(self) -> None:
@@ -151,8 +154,22 @@ class Field:
                         case "new_player":
                             data = msg["parameters"]
                             uuid = data.split(" ")[0]
-                            name = "".join(data.split(" ")[1:])
-                            self.other_players.append({"uuid": uuid, "name": name})
+                            ready = data.split(" ")[1]
+                            name = "".join(data.split(" ")[2:])
+                            self.other_players.append({"uuid": uuid, "name": name, "ready": bool(int(ready))})
+                        case "player_disconnected":
+                            uuid = msg["parameters"]
+                            for i in range(len(self.other_players)):
+                                if self.other_players[i]["uuid"] == uuid:
+                                    self.other_players.pop(i)
+                                    break
+                        case "map":
+                            self.map.load_raw_data(msg["parameters"])
+                        case "switch_ready_status":
+                            players_data = msg['parameters'].split(' ')
+                            for player in self.other_players:
+                                if player['uuid'] == players_data[0]:
+                                    player['ready'] = bool(int(players_data[1]))
         
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:
@@ -210,10 +227,22 @@ class Field:
                     elif self.points[i] == 3:
                         pygame.draw.circle(screen, (0, 255, 0), (SIZE[0]//2-220, SIZE[1]//2-200+i*50+5), 10)
             else:
-                Text(self.player.name, (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-200), False)
-                print(self.other_players)
+                Text(self.player.name, (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-200+5), False)
+                if self.player.is_ready:
+                    pygame.draw.circle(screen, (0, 255, 0), (SIZE[0]//2-200, SIZE[1]//2-200), 10)
+                else:
+                    pygame.draw.circle(screen, (255, 0, 0), (SIZE[0]//2-200, SIZE[1]//2-200), 10)
                 for i, player in enumerate(self.other_players):
-                    Text(player["name"], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-150+i*50), False)
+                    if player["ready"]:
+                        pygame.draw.circle(screen, (0, 255, 0), (SIZE[0]//2-200, SIZE[1]//2-150+i*50), 10)
+                    else:
+                        pygame.draw.circle(screen, (255, 0, 0), (SIZE[0]//2-200, SIZE[1]//2-150+i*50), 10)
+                    
+                    Text(player["name"], (0, 0, 0), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-150+i*50+5), False)
+                
+                for j in range(len(self.other_players), self.map.get_player_amount()-1):
+                    Text("...", (100, 100, 100), 20).print(screen, (SIZE[0]//2-200, SIZE[1]//2-150+j*50), False)
+                Text("Press [R] to be ready", (0, 0, 255), 20).print(screen, (SIZE[0]//2, SIZE[1]//2+100), True)
         elif self.game_status == GameStatus.COUNTDOWN:
             Text("COUNTDOWN", color, 20).print(screen, status_game_text_pos)
             Text(str(int(self.countdown_time_in_ms / 1000)+1), (0, 0, 255), 400).print(screen, (SIZE[0]//2, SIZE[1]//2), True)

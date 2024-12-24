@@ -33,16 +33,26 @@ def broadcast_to_all_except_one(client: socket.socket, type, action, parameters=
 
 
 def game(player: ServerPlayer) -> None:
+    with open(MAP_PATH, 'r') as file:
+        map_data = json.load(file)
+        raw_data = json.dumps(map_data, separators=(',', ':'))
+        send_message(player.client, "game", "map", raw_data)
     for p in PLAYERS:
         if p != player:
-            send_message(player.client, "game", "new_player", f"{p.uuid} {p.name}")
-    broadcast_to_all_except_one(player.client, "game", "new_player", f"{player.uuid} {player.name}")
+            # Send to player all other players data
+            send_message(player.client, "game", "new_player", f"{p.uuid} {int(player.is_ready)} {p.name}")
+    # Send to other players this player data
+    broadcast_to_all_except_one(player.client, "game", "new_player", f"{player.uuid} {int(player.is_ready)} {player.name}")
     while True:
         try:
             msgs: list[dict] = receive_message(player.client, DATA_SIZE)
             for msg in msgs:
                 if msg['type'] == "game":
-                    pass
+                    match msg['action']:
+                        case "ready":
+                            broadcast_to_all_except_one(player.client, "game", "switch_ready_status", f"{player.uuid} {msg['parameters']}")
+                            player.is_ready = bool(int(msg['parameters']))
+                    
         except DisconnectError as de:
             print(f'Connection from {player.client.getpeername()} has been lost.')
             # Delete player from PLAYERS
@@ -51,6 +61,7 @@ def game(player: ServerPlayer) -> None:
                     del PLAYERS[i]
                     break
             player.client.close()
+            broadcast_to_all("game", "player_disconnected", player.uuid)
             break
 
 
@@ -92,6 +103,7 @@ def auth(client: socket.socket) -> None:
                             current_player.name = msg['parameters']
                             current_player.uuid = str(uuid.uuid4())
                             current_player.client = client
+                            current_player.is_ready = False
                             send_message(client, "auth", "uuid", current_player.uuid)
                             PLAYERS.append(current_player)
                             send_message(client, "auth", "success")

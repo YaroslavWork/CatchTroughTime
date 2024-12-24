@@ -26,8 +26,7 @@ class Wall:
         space.add(self.body, self.shape)
 
     def draw(self, screen, camera):
-        local_vertices = [camera.get_local_point(self.body.position.x+v[0], self.body.position.y+v[1]) for v in self.shape.get_vertices()]
-        pygame.draw.polygon(screen, COLORS["wall"], local_vertices)
-        pygame.draw.polygon(screen, COLORS["wall_contour"], local_vertices, 1)
-
-        
+        if self.shape:
+            local_vertices = [camera.get_local_point(self.body.position.x+v[0], self.body.position.y+v[1]) for v in self.shape.get_vertices()]
+            pygame.draw.polygon(screen, COLORS["wall"], local_vertices)
+            pygame.draw.polygon(screen, COLORS["wall_contour"], local_vertices, 1) 

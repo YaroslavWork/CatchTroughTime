@@ -18,6 +18,7 @@ class Player:
         self.uuid = uuid
         self.name = name
         self.role = role
+        self.is_ready = False
 
         self.moment = pymunk.moment_for_circle(PLAYER_MASS, 0, PLAYER_RADIUS)
         self.body = pymunk.Body(PLAYER_MASS, self.moment, pymunk.Body.DYNAMIC)
@@ -29,6 +30,10 @@ class Player:
         self.movement_is_blocked = False
 
         self.force = [0, 0]
+
+    
+    def switch_ready_state(self) -> None:
+        self.is_ready = not self.is_ready
     
     def set_pos(self, x, y):
         self.body.position = (x, y)

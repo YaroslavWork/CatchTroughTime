@@ -2,5 +2,5 @@
     "ip": "localhost",
     "port": 19560,
     "password": "password",
-    "map_path": "./conf/first_map.json"
+    "map_path": "./server/first_map.json"
 }

@@ -3,3 +3,4 @@ class ServerPlayer:
         self.name = name
         self.uuid = uuid
         self.client = client
+        self.is_ready = False
