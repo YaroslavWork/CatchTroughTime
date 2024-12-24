@@ -147,7 +147,6 @@ class Field:
                             self.texts[3] = f"UUID is provided: ({self.player.uuid})"
                             self.points[3] = 3
                         case "success":
-                            print("Auth success")
                             self.server_auth_verified = True
                 elif msg["type"] == "game":
                     match msg["action"]:
@@ -174,7 +173,10 @@ class Field:
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:
         self.player.update(mouse_pos)
-
+        
+        if self.game_status == GameStatus.PREPARING:
+            if all([player['ready'] for player in self.other_players]) and self.player.is_ready:
+                self.start_countdown()
         if self.game_status == GameStatus.COUNTDOWN:
             self.countdown_time_in_ms -= dt
             if self.countdown_time_in_ms <= 0:
