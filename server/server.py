@@ -52,6 +52,8 @@ def game(player: ServerPlayer) -> None:
                         case "ready":
                             broadcast_to_all_except_one(player.client, "game", "switch_ready_status", f"{player.uuid} {msg['parameters']}")
                             player.is_ready = bool(int(msg['parameters']))
+                            if all([user.is_ready for user in PLAYERS]):
+                                broadcast_to_all("game", "start_countdown")
                     
         except DisconnectError as de:
             print(f'Connection from {player.client.getpeername()} has been lost.')

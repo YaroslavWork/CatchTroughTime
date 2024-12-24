@@ -169,14 +169,12 @@ class Field:
                             for player in self.other_players:
                                 if player['uuid'] == players_data[0]:
                                     player['ready'] = bool(int(players_data[1]))
+                        case "start_countdown":
+                            self.start_countdown()
         
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:
         self.player.update(mouse_pos)
-        
-        if self.game_status == GameStatus.PREPARING:
-            if all([player['ready'] for player in self.other_players]) and self.player.is_ready:
-                self.start_countdown()
         if self.game_status == GameStatus.COUNTDOWN:
             self.countdown_time_in_ms -= dt
             if self.countdown_time_in_ms <= 0:
