@@ -6,19 +6,37 @@ class DisconnectError(Exception):
         super().__init__(sock)
         self.sock = sock
 
+SEPARATOR = "NEXT"
+END = "END"
+CONTINUE = "CON"
+
 def receive_message(sock, length=1024, DEBUG=True):
+    global SEPARATOR, END, CONTINUE
+
     try:
-        messages = sock.recv(length).decode("utf-8").split("\0")[:-1]
+        recv_message = f"{CONTINUE}"
+        while recv_message[-len(CONTINUE):] == CONTINUE:
+            print("REC", recv_message)
+            recv_message = recv_message[:-len(CONTINUE)]
+            recv_message += sock.recv(length).decode("utf-8")
+            print("REC2", recv_message)
     except ConnectionResetError:
         raise DisconnectError(sock)
 
+    for i in range(len(recv_message)-len(CONTINUE)):
+        if recv_message[i:i+len(CONTINUE)] == CONTINUE:
+            recv_message = recv_message[:i] + recv_message[i+len(CONTINUE):]
+    print("REC3", recv_message)
+
+    messages = recv_message.split(END)[:-1]
+
     messages_dict = []
     for message in messages:
-        message = message.split("\1")
+        message = message.split(SEPARATOR)
         sending_time = message[0]
         mes_type = message[1]
         action = message[2]
-        parameters = ' '.join(message[3:]) if len(message) > 3 else None
+        parameters = ''.join(message[3:]) if len(message) > 3 else None
 
         if DEBUG:
             reading_time = datetime.utcfromtimestamp(float(sending_time)).strftime('%Y-%m-%d %H:%M:%S.%f')[:-2]
@@ -33,14 +51,29 @@ def receive_message(sock, length=1024, DEBUG=True):
     return messages_dict
 
 def send_message(sock, mes_type, action, parameters=None, length=1024, DEBUG=True):
+    '''ATTENSION: Don't use syntax words like "CON", "NEXT" or "END" in messages'''
+    global SEPARATOR, END, CONTINUE
+
     now = time.time()
     if parameters:
-        message = f"{now}\1{mes_type}\1{action}\1{parameters}\0"
+        message = f"{now}{SEPARATOR}{mes_type}{SEPARATOR}{action}{SEPARATOR}{parameters}{END}"
     else:
-        message = f"{now}\1{mes_type}\1{action}\1\0"
+        message = f"{now}{SEPARATOR}{mes_type}{SEPARATOR}{action}{SEPARATOR}{END}"
+
+    chunks_amount = (len(message)-1) // (length-len(CONTINUE))
 
     try:
-        sock.send(message.encode("utf-8"))
+        for i in range(chunks_amount):
+            start_idx = i*length-i*len(CONTINUE)
+            end_idx = i*length-i-len(CONTINUE)+length-i*(len(CONTINUE)-1)
+
+            chunk_message = f"{message[start_idx:end_idx]}{CONTINUE}"
+            print("I:", i, chunk_message)
+            sock.send(chunk_message.encode('utf-8'))
+
+        last_chunk_message = f"{message[(i+1)*length-(i+1)*len(CONTINUE):]}"
+        print("L:", last_chunk_message)
+        sock.send(last_chunk_message.encode('utf-8'))
     except ConnectionResetError:
         DisconnectError(sock)
 
