@@ -4,6 +4,7 @@ import threading
 import json
 from time import sleep
 import uuid
+import random
 
 from player import ServerPlayer
 from transfer_messages import DisconnectError, send_message, receive_message
@@ -15,10 +16,10 @@ MAP_PATH = './maps_conf/map.json'
 MAX_CONNECTIONS = 2
 DATA_SIZE = 1024
 PLAYERS = []
-
+PLAYER_POS = [i for i in range(MAX_CONNECTIONS)]
 
 def broadcast_to_all(type, action, parameters=None):
-    global PLAYERS
+    global PLAYERS, PLAYER_POS
     
     for player in PLAYERS:
         send_message(player.client, type, action, parameters)
@@ -33,14 +34,18 @@ def broadcast_to_all_except_one(client: socket.socket, type, action, parameters=
 
 
 def game(player: ServerPlayer) -> None:
+    global PLAYERS, PLAYER_POS, MAX_CONNECTIONS, DATA_SIZE
+
     with open(MAP_PATH, 'r') as file:
         map_data = json.load(file)
         raw_data = json.dumps(map_data, separators=(',', ':'))
         send_message(player.client, "game", "map", raw_data)
+        print(PLAYER_POS, len(PLAYERS)-1, PLAYER_POS[len(PLAYERS)-1])
+        send_message(player.client, "game", "game_pos", str(PLAYER_POS[len(PLAYERS)-1]))
     for p in PLAYERS:
         if p != player:
             # Send to player all other players data
-            send_message(player.client, "game", "new_player", f"{p.uuid} {int(player.is_ready)} {p.name}")
+            send_message(player.client, "game", "new_player", f"{p.uuid} {int(p.is_ready)} {p.name}")
     # Send to other players this player data
     broadcast_to_all_except_one(player.client, "game", "new_player", f"{player.uuid} {int(player.is_ready)} {player.name}")
     while True:
@@ -52,8 +57,13 @@ def game(player: ServerPlayer) -> None:
                         case "ready":
                             broadcast_to_all_except_one(player.client, "game", "switch_ready_status", f"{player.uuid} {msg['parameters']}")
                             player.is_ready = bool(int(msg['parameters']))
-                            if all([user.is_ready for user in PLAYERS]):
+                            if all([user.is_ready for user in PLAYERS]) and len(PLAYERS) == MAX_CONNECTIONS:
                                 broadcast_to_all("game", "start_countdown")
+                        case "movement":
+                            player.movement = msg["parameters"]
+                            broadcast_to_all_except_one(player.client, "game", "other_movement_uuid", player.uuid)
+                            broadcast_to_all_except_one(player.client, "game", "other_movement", player.movement)
+
                     
         except DisconnectError as de:
             print(f'Connection from {player.client.getpeername()} has been lost.')
@@ -120,7 +130,7 @@ def auth(client: socket.socket) -> None:
 
 
 def main():
-    global SERVER_IP, SERVER_PORT, SERVER_PASSWORD, MAP_PATH, MAX_CONNECTIONS
+    global SERVER_IP, SERVER_PORT, SERVER_PASSWORD, MAP_PATH, MAX_CONNECTIONS, PLAYER_POS
 
     try:
         with open('server/server_conf.json', 'r') as file:
@@ -139,6 +149,8 @@ def main():
     with open(MAP_PATH, 'r') as file:
         map_data = json.load(file)
         MAX_CONNECTIONS = len(map_data['catcher_start_pos']) + len(map_data['runner_start_pos'])
+        PLAYER_POS = [i for i in range(MAX_CONNECTIONS)]
+        random.shuffle(PLAYER_POS)
     print(f'Max connections: {MAX_CONNECTIONS}')
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:

@@ -16,17 +16,14 @@ def receive_message(sock, length=1024, DEBUG=True):
     try:
         recv_message = f"{CONTINUE}"
         while recv_message[-len(CONTINUE):] == CONTINUE:
-            print("REC", recv_message)
             recv_message = recv_message[:-len(CONTINUE)]
             recv_message += sock.recv(length).decode("utf-8")
-            print("REC2", recv_message)
     except ConnectionResetError:
         raise DisconnectError(sock)
 
     for i in range(len(recv_message)-len(CONTINUE)):
         if recv_message[i:i+len(CONTINUE)] == CONTINUE:
             recv_message = recv_message[:i] + recv_message[i+len(CONTINUE):]
-    print("REC3", recv_message)
 
     messages = recv_message.split(END)[:-1]
 
@@ -68,11 +65,9 @@ def send_message(sock, mes_type, action, parameters=None, length=1024, DEBUG=Tru
             end_idx = i*length-i-len(CONTINUE)+length-i*(len(CONTINUE)-1)
 
             chunk_message = f"{message[start_idx:end_idx]}{CONTINUE}"
-            print("I:", i, chunk_message)
             sock.send(chunk_message.encode('utf-8'))
 
-        last_chunk_message = f"{message[(i+1)*length-(i+1)*len(CONTINUE):]}"
-        print("L:", last_chunk_message)
+        last_chunk_message = f"{message[chunks_amount*length-chunks_amount*len(CONTINUE):]}"
         sock.send(last_chunk_message.encode('utf-8'))
     except ConnectionResetError:
         DisconnectError(sock)

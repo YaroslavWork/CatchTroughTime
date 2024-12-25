@@ -4,3 +4,4 @@ class ServerPlayer:
         self.uuid = uuid
         self.client = client
         self.is_ready = False
+        self.movement = []

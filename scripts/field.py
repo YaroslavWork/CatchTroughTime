@@ -56,9 +56,11 @@ class Field:
             self.sock = None
         self.connect_thread = threading.Thread(target=self.connect).start()
 
+        self.remember_uuid = ""
+
     def switch_ready_state(self) -> None:
-        self.player.switch_ready_state()
-        if self.server_auth_verified:
+        if self.server_auth_verified and self.game_status == GameStatus.PREPARING:
+            self.player.switch_ready_state()
             send_message(self.sock, "game", "ready", f"{int(self.player.is_ready)}")
 
     def prepare_action(self) -> None:
@@ -169,8 +171,18 @@ class Field:
                             for player in self.other_players:
                                 if player['uuid'] == players_data[0]:
                                     player['ready'] = bool(int(players_data[1]))
+                        case "game_pos":
+                            self.map.set_players(int(msg['parameters']), self.player, change_role=True)
                         case "start_countdown":
                             self.start_countdown()
+                        case "other_movement_uuid":
+                            self.remember_uuid = msg['parameters']
+                        case "other_movement":
+                            for player in self.other_players:
+                                if player['uuid'] == self.remember_uuid:
+                                    player['movement'] = msg['parameters']
+
+                            print(self.other_players)
         
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:
@@ -190,6 +202,7 @@ class Field:
 
             if self.action_time_in_ms >= ACTION_TIME:
                 self.game_status = GameStatus.AFTER_ACTION
+                send_message(self.sock, "game", "movement", self.movement_records)
                 self.player.block_movement()
         elif self.game_status == GameStatus.SIMULATION:
             self.simulation.update(dt)
