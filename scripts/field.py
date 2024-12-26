@@ -153,11 +153,12 @@ class Field:
                 elif msg["type"] == "game":
                     match msg["action"]:
                         case "new_player":
-                            data = msg["parameters"]
-                            uuid = data.split(" ")[0]
-                            ready = data.split(" ")[1]
-                            name = "".join(data.split(" ")[2:])
-                            self.other_players.append({"uuid": uuid, "name": name, "ready": bool(int(ready))})
+                            data = msg["parameters"].split(" ")
+                            uuid = data[0]
+                            ready = data[1]
+                            is_catcher = data[2]
+                            name = "".join(data[3:])
+                            self.other_players.append({"uuid": uuid, "name": name, "ready": bool(int(ready)), "is_catcher": bool(int(is_catcher))})
                         case "player_disconnected":
                             uuid = msg["parameters"]
                             for i in range(len(self.other_players)):
@@ -181,8 +182,6 @@ class Field:
                             for player in self.other_players:
                                 if player['uuid'] == self.remember_uuid:
                                     player['movement'] = msg['parameters']
-
-                            print(self.other_players)
         
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:

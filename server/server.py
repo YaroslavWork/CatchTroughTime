@@ -17,6 +17,8 @@ MAX_CONNECTIONS = 2
 DATA_SIZE = 1024
 PLAYERS = []
 PLAYER_POS = [i for i in range(MAX_CONNECTIONS)]
+CATCHER_AMOUNT = 1
+RUNNER_AMOUNT = 1
 
 def broadcast_to_all(type, action, parameters=None):
     global PLAYERS, PLAYER_POS
@@ -40,14 +42,21 @@ def game(player: ServerPlayer) -> None:
         map_data = json.load(file)
         raw_data = json.dumps(map_data, separators=(',', ':'))
         send_message(player.client, "game", "map", raw_data)
-        print(PLAYER_POS, len(PLAYERS)-1, PLAYER_POS[len(PLAYERS)-1])
-        send_message(player.client, "game", "game_pos", str(PLAYER_POS[len(PLAYERS)-1]))
+
+    start_pos = PLAYER_POS[len(PLAYERS)-1]
+    if start_pos < CATCHER_AMOUNT:
+        player.is_catcher = True
+    else:
+        player.is_catcher = False
+    send_message(player.client, "game", "game_pos", str(start_pos))
+
     for p in PLAYERS:
         if p != player:
             # Send to player all other players data
-            send_message(player.client, "game", "new_player", f"{p.uuid} {int(p.is_ready)} {p.name}")
+            send_message(player.client, "game", "new_player", f"{p.uuid} {int(p.is_ready)} {int(p.is_catcher)} {p.name}")
     # Send to other players this player data
-    broadcast_to_all_except_one(player.client, "game", "new_player", f"{player.uuid} {int(player.is_ready)} {player.name}")
+    broadcast_to_all_except_one(player.client, "game", "new_player", f"{player.uuid} {int(player.is_ready)} {int(player.is_catcher)} {player.name}")
+    
     while True:
         try:
             msgs: list[dict] = receive_message(player.client, DATA_SIZE)
@@ -130,7 +139,7 @@ def auth(client: socket.socket) -> None:
 
 
 def main():
-    global SERVER_IP, SERVER_PORT, SERVER_PASSWORD, MAP_PATH, MAX_CONNECTIONS, PLAYER_POS
+    global SERVER_IP, SERVER_PORT, SERVER_PASSWORD, MAP_PATH, MAX_CONNECTIONS, PLAYER_POS, CATCHER_AMOUNT, RUNNER_AMOUNT
 
     try:
         with open('server/server_conf.json', 'r') as file:
@@ -148,7 +157,10 @@ def main():
     
     with open(MAP_PATH, 'r') as file:
         map_data = json.load(file)
-        MAX_CONNECTIONS = len(map_data['catcher_start_pos']) + len(map_data['runner_start_pos'])
+        CATCHER_AMOUNT = len(map_data['catcher_start_pos'])
+        RUNNER_AMOUNT = len(map_data['runner_start_pos'])
+        MAX_CONNECTIONS = CATCHER_AMOUNT + RUNNER_AMOUNT
+        
         PLAYER_POS = [i for i in range(MAX_CONNECTIONS)]
         random.shuffle(PLAYER_POS)
     print(f'Max connections: {MAX_CONNECTIONS}')
