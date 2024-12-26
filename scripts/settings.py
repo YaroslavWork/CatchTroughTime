@@ -1,5 +1,5 @@
 SIZE = [1080, 720]  # [width, height]
-NAME = "Catch Trought Time"  # Name of the window
+NAME = "Catch Trought Time (ALPHA 0.0.7)"  # Name of the window
 FPS = 0  # 0 - unlimited
 DEBUG = False  # Debug mode
 

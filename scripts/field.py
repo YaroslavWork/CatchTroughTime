@@ -221,9 +221,11 @@ class Field:
             if self.simulation.get_time() >= ACTION_TIME:
                 self.game_status = GameStatus.RESULTS
                 self.winner = PlayerRole.RUNNER
+                send_message(self.sock, "game", "result", "runner")
             if self.simulation.collision_is_detected:
                 self.game_status = GameStatus.RESULTS
                 self.winner = PlayerRole.CATCHER
+                send_message(self.sock, "game", "result", "catcher")
 
     def draw(self, screen, camera) -> None:
         if self.game_status != GameStatus.SIMULATION and self.game_status != GameStatus.RESULTS:

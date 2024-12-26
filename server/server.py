@@ -19,9 +19,11 @@ PLAYERS = []
 PLAYER_POS = [i for i in range(MAX_CONNECTIONS)]
 CATCHER_AMOUNT = 1
 RUNNER_AMOUNT = 1
+GAME_COUNT = 0
+WINNERS = []
 
 def broadcast_to_all(type, action, parameters=None):
-    global PLAYERS, PLAYER_POS
+    global PLAYERS, PLAYER_POS, WINNERS
     
     for player in PLAYERS:
         send_message(player.client, type, action, parameters)
@@ -74,7 +76,8 @@ def game(player: ServerPlayer) -> None:
 
                             if all([user.movement for user in PLAYERS]):
                                 broadcast_to_all("game", "start_simulation")
-
+                        case "result":
+                            pass
                     
         except DisconnectError as de:
             print(f'Connection from {player.client.getpeername()} has been lost.')
