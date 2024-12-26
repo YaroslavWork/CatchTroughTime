@@ -5,4 +5,4 @@ class ServerPlayer:
         self.client = client
         self.is_ready = False
         self.is_catcher = False
-        self.movement = []
+        self.movement = None

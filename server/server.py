@@ -70,8 +70,10 @@ def game(player: ServerPlayer) -> None:
                                 broadcast_to_all("game", "start_countdown")
                         case "movement":
                             player.movement = msg["parameters"]
-                            broadcast_to_all_except_one(player.client, "game", "other_movement_uuid", player.uuid)
-                            broadcast_to_all_except_one(player.client, "game", "other_movement", player.movement)
+                            broadcast_to_all_except_one(player.client, "game", "other_movement", f"{player.uuid}!{player.movement}")
+
+                            if all([user.movement for user in PLAYERS]):
+                                broadcast_to_all("game", "start_simulation")
 
                     
         except DisconnectError as de:

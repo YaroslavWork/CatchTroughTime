@@ -8,6 +8,7 @@ from scripts.player import PlayerRole
 from scripts.simulation import Simulation
 from scripts.wall import Wall
 from scripts.settings import COUNTDOWN_TIME, ACTION_TIME, SIZE, SERVER_TICK, COLORS
+from scripts.converters import convert_str_movement_into_list
 from server.transfer_messages import send_message, receive_message
 from enum import Enum
 
@@ -73,9 +74,20 @@ class Field:
 
     def launch_simulation(self) -> None:
         if self.game_status == GameStatus.AFTER_ACTION:
-            self.game_status = GameStatus.SIMULATION
-            self.simulation = Simulation(["Player"], [self.player.role], [self.movement_records], self.map, SERVER_TICK)
+            names = [self.player.name]
+            roles = [self.player.role]
+            movements = [self.movement_records]
+            for player in self.other_players:
+                names.append(player['name'])
+                if player['is_catcher']:
+                    roles.append(PlayerRole.CATCHER)
+                else:
+                    roles.append(PlayerRole.RUNNER)
+                movements.append(player['movement'])
+
+            self.simulation = Simulation(names, roles, movements, self.map, SERVER_TICK)
             self.simulation.start()
+            self.game_status = GameStatus.SIMULATION
 
     # --- Server part ---
     def connect(self) -> None:
@@ -176,12 +188,13 @@ class Field:
                             self.map.set_players(int(msg['parameters']), self.player, change_role=True)
                         case "start_countdown":
                             self.start_countdown()
-                        case "other_movement_uuid":
-                            self.remember_uuid = msg['parameters']
                         case "other_movement":
+                            values = msg['parameters'].split("!")
                             for player in self.other_players:
-                                if player['uuid'] == self.remember_uuid:
-                                    player['movement'] = msg['parameters']
+                                if player['uuid'] == values[0]:
+                                    player['movement'] = convert_str_movement_into_list(values[1])
+                        case "start_simulation":
+                            self.launch_simulation()
         
 
     def update(self, dt: float, mouse_pos: list[float, float]) -> None:
